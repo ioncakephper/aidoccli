@@ -18,13 +18,15 @@
     "release": "npx semantic-release"
   },
   "keywords": [
+    "ai",
+    "documentation",
+    "cli",
     "javascript",
-    "template",
-    "eslint",
-    "prettier",
-    "jest",
-    "ci",
-    "starter"
+    "typescript",
+    "jsdoc",
+    "tsdoc",
+    "docs-generator",
+    "automation"
   ],
   "author": "ioncakephper",
   "license": "MIT",
