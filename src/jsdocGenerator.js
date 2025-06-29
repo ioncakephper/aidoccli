@@ -720,6 +720,12 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(globPattern
     let fileModified = false;
 
     // Helper: Generate new JSDoc lines for a node
+    /**
+     * Generates or updates JSDoc lines for a given AST node.
+     * @param {object} node - The AST node to process.
+     * @param {object} path - The Babel traverse path object for the node.
+     * @returns {Promise<string[]|null>} An array of JSDoc lines or null if not applicable.
+     */
     async function generateJSDocLines(node, path) {
       let jsdocComment = getJSDocBlocks(node.leadingComments);
       let inferredJSDoc = null;
@@ -750,8 +756,14 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(globPattern
       if (!inferredJSDoc) return null;
 
       if (jsdocComment) {
-        return updateJSDocBlock(jsdocComment, inferredJSDoc);
-      }
+    // Helper: Create new JSDoc block lines
+    /**
+     * Generates a new JSDoc block as an array of lines, given inferred JSDoc information.
+     * Used when no existing JSDoc block is present for a node; otherwise, updateJSDocBlock is used.
+     * @param {object} inferredJSDoc - The inferred JSDoc properties for the node.
+     * @returns {string[]} The new JSDoc lines.
+     */
+    function createNewJSDocLines(inferredJSDoc) {
       // Create new JSDoc block
       return createNewJSDocLines(inferredJSDoc);
     }
