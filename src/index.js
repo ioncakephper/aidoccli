@@ -84,7 +84,7 @@ program.configureHelp({
   showGlobalOptions: true,
   showGlobalOptionValues: true,
   showHidden: false,
-  showHelpAfterError: true
+  showHelpAfterError: true,
 });
 
 // Define the main 'generate' command
@@ -136,7 +136,6 @@ program
     0.7
   )
   .action(generateAction);
-
 
 /**
  * The main action handler for the 'generate' command.

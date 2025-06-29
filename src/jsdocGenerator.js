@@ -145,7 +145,8 @@ function getJSDocBlocks(comments) {
   });
   // Remove leading empty line and trailing '*/' line equivalent
   if (lines[0] === '') lines.shift();
-  if (lines[lines.length - 1] === '*/' || lines[lines.length - 1] === '/') lines.pop(); // Remove trailing JSDoc end marker
+  if (lines[lines.length - 1] === '*/' || lines[lines.length - 1] === '/')
+    lines.pop(); // Remove trailing JSDoc end marker
 
   return lines;
 }
@@ -700,7 +701,9 @@ function updateJSDocBlock(existingJSDocLines, inferredJSDoc) {
  * Main function to process files and update JSDoc comments.
  * @param {string[]} globPatterns - Array of glob patterns for files to process.
  */
-exports.processFilesWithJSDoc = async function processFilesWithJSDoc(globPatterns) {
+exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
+  globPatterns
+) {
   const files = await glob(globPatterns);
   console.log(`Found ${files.length} JavaScript/TypeScript files to process.`);
 
