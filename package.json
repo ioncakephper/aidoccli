@@ -1,7 +1,7 @@
 {
-  "name": "js-quality-starter-with-release",
-  "version": "1.0.1",
-  "description": "A template repository for modern JavaScript projects with pre-configured linting, formatting, testing, and CI/CD using GitHub Actions.",
+  "name": "aidoccli",
+  "version": "1.0.0",
+  "description": "AI-powered Documentation CLI for JavaScript and TypeScript Projects",
   "main": "src/index.js",
   "scripts": {
     "test": "jest",
