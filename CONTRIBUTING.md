@@ -1,6 +1,6 @@
-# Contributing to js-quality-starter-with-release
+# Contributing to aidoccli
 
-We welcome contributions to the `js-quality-starter-with-release` template! By contributing, you help improve this foundation for JavaScript projects for everyone.
+We welcome contributions to the `aidoccli` project! By contributing, you help improve this foundation for JavaScript and TypeScript documentation generation automatically.
 
 Please take a moment to review this document to understand our contribution guidelines.
 
@@ -20,7 +20,7 @@ Please take a moment to review this document to understand our contribution guid
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the js-quality-starter-with-release Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to [YOUR_PROJECT_CONTACT_EMAIL].
+This project and everyone participating in it is governed by the aidoccli Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to shytiger@yahoo.com.
 
 ## How to Contribute
 
@@ -50,8 +50,8 @@ If you're new to contributing to open source or this project, here's a general w
 2. **Clone** your forked repository to your local machine:
 
    ```bash
-   git clone https://github.com/your-username/js-quality-starter-with-release.git # Replace with your username
-   cd js-quality-starter-with-release
+   git clone https://github.com/your-username/aidoccli.git # Replace with your username
+   cd aidoccli
    ```
 
 3. **Install dependencies**:
@@ -76,7 +76,7 @@ If you're new to contributing to open source or this project, here's a general w
    git push origin feature/your-feature-name
    ```
 
-9. Open a **Pull Request** to the `main` branch of the original `js-quality-starter-with-release` repository.
+9. Open a **Pull Request** to the `main` branch of the original `aidoccli` repository.
 
 ### Pull Request Guidelines
 
@@ -136,4 +136,4 @@ BREAKING CHANGE: The `getUser` method has been removed. Please use `fetchUser` i
 
 ## License
 
-By contributing to `js-quality-starter-with-release`, you agree that your contributions will be licensed under its MIT License.
+By contributing to `aidoccli`, you agree that your contributions will be licensed under its MIT License.
