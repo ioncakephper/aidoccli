@@ -11,7 +11,7 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 2023, // Use a specific, recent ECMAScript version for modern syntax like import assertions
-    sourceType: 'module', // Allows for the use of imports
+    sourceType: 'script', // Use 'script' for CommonJS modules
   },
   rules: {
     // For a CLI tool, console logs are expected and intentional for user feedback.

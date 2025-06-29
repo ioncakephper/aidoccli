@@ -159,8 +159,10 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
       if (options.dryRun) {
         console.log(`  Would update ${filePath} (Dry Run)`);
       } else {
-        const output = generate(babelAst, { retainLines: true, comments: true })
-          .code;
+        const output = generate(babelAst, {
+          retainLines: true,
+          comments: true,
+        }).code;
         await fs.writeFile(filePath, output, 'utf-8');
         console.log(`  Successfully updated ${filePath}`);
       }

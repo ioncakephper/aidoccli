@@ -1,4 +1,3 @@
-
 function add(a, b) {
   return a + b;
 }
@@ -59,3 +58,5 @@ function main() {
   const child = new Child('Bob', 10);
   console.log(child.introduce());
 }
+
+main();
