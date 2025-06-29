@@ -1,4 +1,6 @@
-# js-quality-starter-with-release
+# aidoccli
+
+**AI-powered Documentation CLI for JavaScript and TypeScript Projects**
 
 [![Release](https://github.com/your-username/your-new-repo/actions/workflows/release.yml/badge.svg)](https://github.com/your-username/your-new-repo/actions/workflows/release.yml)
 [![semantic-release](https://img.shields.io/badge/semantic--release-e10079?logo=semantic-release&logoColor=white)](https://github.com/semantic-release/semantic-release)
@@ -6,9 +8,9 @@
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A template repository for modern JavaScript projects with pre-configured linting, formatting, testing, and a fully automated release pipeline using `semantic-release`.
+---
 
-This template provides a solid foundation for any new JavaScript project, ensuring code quality and consistency from the start.
+**aidoccli** (pronounced: “AI Doc C-L-I”) is a command-line tool that leverages artificial intelligence to generate, update, and maintain high-quality documentation for your JavaScript and TypeScript codebases. Save time, ensure consistency, and improve onboarding with smart, automated docs—right from your terminal.
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -28,51 +30,64 @@ This template provides a solid foundation for any new JavaScript project, ensuri
 - [Contributing](#contributing)
 - [License](#license)
 
-## Quick Start
+## Features
 
-```bash
-npx degit your-github-username/js-quality-starter-with-release my-new-project --force
-cd my-new-project
-npm install
-npm test
-# Start building!
+- 🚀 **Automatic Doc Generation**: Instantly create comprehensive documentation for your JS/TS projects.
+- 🤖 **AI-Powered Summaries**: Let AI explain code, functions, and modules in clear, concise language.
+- 🔍 **Customizable Output**: Tailor your docs to different formats (Markdown, HTML, etc.).
+- 🛠️ **Easy Integration**: Use as a standalone CLI or integrate into your CI/CD pipeline.
+- 📦 **Support for Modern JavaScript & TypeScript**: Handles ES modules, async code, React components, and more.
+
+## Installation
+
+```sh
+npm install -g aidoccli
 ```
 
-## Why Choose `js-quality-started-with-release`?
+## Usage
 
-Tired of repetitive setup, inconsistent code, and integration headaches? See how `js-quality-started-with-release` provides a superior foundation compared to starting from scratch or using basic boilerplates.
+```sh
+aidoccli [options] <path-to-your-project>
+```
 
-| Criteria                           | Minimal/Empty Repository | Basic Boilerplate                | `js-quality-started-with-release` Template                   |
-| :--------------------------------- | :----------------------- | :------------------------------- | :----------------------------------------------------------- |
-| **Core Purpose**                   | Blank slate              | Quick start, basic structure     | Quality, consistency, efficiency                             |
-| **Linting (e.g., ESLint)**         | ❌ No                    | ⚙️ Manual setup required / Basic | ✅ Pre-configured, opinionated                               |
-| **Formatting (e.g., Prettier)**    | ❌ No                    | ⚙️ Manual setup required         | ✅ Pre-configured                                            |
-| **Testing Framework (e.g., Jest)** | ❌ No                    | ⚙️ Manual setup required         | ✅ Pre-configured with coverage                              |
-| **Test Coverage Reporting**        | ❌ No                    | ❌ No                            | ✅ Included                                                  |
-| **Build/Bundling Tool**            | ❌ No                    | ⚙️ Manual setup required / Basic | ✅ Pre-configured (e.g., Babel)                              |
-| **Language Support**               | JS Only                  | JS Only                          | JS (easily extensible to TS)                                 |
-| **Documentation Gen. Tools**       | ❌ No                    | ❌ No                            | ⚙️ Manual add/Configuring                                    |
-| **CI/CD Configuration**            | ❌ No                    | ⚙️ Manual setup required / Basic | ✅ Pre-configured GitHub Actions                             |
-| **Community Health Files**         | ❌ No                    | ⚙️ Basic `README.md`             | ✅ Comprehensive (`README`, `CONTRIBUTING`, `LICENSE`, etc.) |
-| **Opinionation Level**             | None                     | Low                              | High (for quality tools)                                     |
-| **Initial Setup Time**             | Very High                | High                             | Very Low                                                     |
-| **Code Quality Assurance**         | Manual                   | Limited / Manual                 | Automated & Proactive                                        |
-| **Team Collaboration Aid**         | Low                      | Moderate                         | High                                                         |
+### Common Commands
 
-## What's Inside?
+- `aidoccli generate ./src`  
+  Generate documentation for all files in the `src` directory.
 
-This template comes pre-configured with a suite of modern, industry-standard tools to ensure your project maintains high code quality.
+- `aidoccli update ./src/utils`  
+  Update existing documentation in the `utils` folder.
 
-| Tool               | Purpose                                                                                                                                  |
-| :----------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| **ESLint**         | Statically analyzes your code to quickly find and fix problems. It's configured with recommended rules to enforce best practices.        |
-| **Prettier**       | An opinionated code formatter that enforces a consistent style across your entire codebase, eliminating arguments over code style.       |
-| **Jest**           | A delightful JavaScript Testing Framework with a focus on simplicity. It's set up and ready for you to write unit and integration tests. |
-| **markdownlint**   | A linter for Markdown files to enforce consistent style and catch common errors in documentation.                                        |
-| **Husky**          | Manages Git hooks to make it easy to run scripts at specific stages, like before a commit.                                               |
-| **lint-staged**    | Works with Husky to run linters and formatters on your staged files _before_ they are committed, ensuring no bad code gets in.           |
-| **GitHub Actions** | Automates your workflow with two pre-configured CI pipelines for validating code on `main` and all other feature branches.               |
+- `aidoccli summary ./src/index.ts`  
+  Get an AI-generated summary/explanation for a specific file.
 
+### Options
+
+| Option            | Description                                  |
+|-------------------|----------------------------------------------|
+| `-f, --format`    | Output format (markdown, html, etc.)         |
+| `-o, --output`    | Output directory                             |
+| `-c, --config`    | Path to config file                          |
+| `-h, --help`      | Show help information                        |
+
+## Example
+
+```sh
+aidoccli generate -f markdown -o docs ./src
+```
+
+## Why AIDocCLI?
+
+- **Save Developer Time:** No more manual doc writing.
+- **Consistent Quality:** AI ensures readability and uniformity.
+- **Better Onboarding:** New team members get up to speed faster.
+
+## Roadmap
+
+- [ ] Add support for additional languages
+- [ ] Interactive Q&A for codebases
+- [ ] Integration with GitHub Actions
+- [ ] 
 ## Getting Started
 
 ### Using as a Template
