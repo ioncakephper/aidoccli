@@ -2,9 +2,9 @@
 
 **AI-powered Documentation CLI for JavaScript and TypeScript Projects**
 
-[![Release](https://github.com/your-username/your-new-repo/actions/workflows/release.yml/badge.svg)](https://github.com/your-username/your-new-repo/actions/workflows/release.yml)
+[![Release](https://github.com/ioncakephper/aidoccli/actions/workflows/release.yml/badge.svg)](https://github.com/ioncakephper/aidoccli/actions/workflows/release.yml)
 [![semantic-release](https://img.shields.io/badge/semantic--release-e10079?logo=semantic-release&logoColor=white)](https://github.com/semantic-release/semantic-release)
-[![codecov](https://codecov.io/gh/your-username/your-new-repo/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/your-username/your-new-repo)
+[![codecov](https://codecov.io/gh/ioncakephper/aidoccli/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/ioncakephper/aidoccli)
 [![Code style: Prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -87,7 +87,7 @@ aidoccli generate -f markdown -o docs ./src
 - [ ] Add support for additional languages
 - [ ] Interactive Q&A for codebases
 - [ ] Integration with GitHub Actions
-- [ ] 
+
 ## Getting Started
 
 ### Using as a Template
@@ -141,9 +141,9 @@ In the project directory, you can run:
 - `npm run format:md`: Checks for formatting issues with Prettier for Markdown files.
 - `npm run format:md:fix`: Formats all Markdown files with Prettier.
 
-## How It Works
+## Manage repository files
 
-This template is built around a fully automated, commit-driven workflow.
+This repository is built around a fully automated, commit-driven workflow.
 
 ### Pre-commit and Commit Message Hooks
 
@@ -175,7 +175,7 @@ This means you no longer need to manually tag versions. Your release cycle is ti
 
 ## Customization
 
-This template is a starting point. You can easily customize it to fit your project's needs:
+You can easily customize this repository to fit your project's needs:
 
 - **Linting Rules**: Modify the `.eslintrc.js` file to add or change ESLint rules.
 - **Formatting Options**: Adjust the `.prettierrc` file to change Prettier's formatting options.
@@ -185,7 +185,7 @@ This template is a starting point. You can easily customize it to fit your proje
 
 ## Code Coverage
 
-This template is configured to generate code coverage reports using Jest. The reports are output to the `coverage/` directory in various formats, including `lcov`, which is compatible with popular code coverage services.
+This project is configured to generate code coverage reports using Jest. The reports are output to the `coverage/` directory in various formats, including `lcov`, which is compatible with popular code coverage services.
 
 To get a dynamic code coverage badge like the one at the top of this `README.md`, you can integrate with a service like Codecov or Coveralls.
 
