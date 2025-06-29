@@ -20,7 +20,7 @@ Please take a moment to review this document to understand our contribution guid
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the aidoccli Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to shytiger@yahoo.com.
+This project and everyone participating in it is governed by the aidoccli Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to <shytiger@yahoo.com>.
 
 ## How to Contribute
 
@@ -128,7 +128,8 @@ Please follow this specification. The `commitlint` hook will prevent non-complia
 - **Other types** (`docs:`, `chore:`, `refactor:`, `style:`, `test:`): These commits will be included in the release notes but **will not** trigger a release on their own.
 
 **Example of a breaking change commit:**
-```
+
+```plaintext
 feat: remove deprecated `getUser` method
 
 BREAKING CHANGE: The `getUser` method has been removed. Please use `fetchUser` instead.

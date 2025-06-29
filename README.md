@@ -1,6 +1,6 @@
 # aidoccli
 
-**AI-powered Documentation CLI for JavaScript and TypeScript Projects**
+AI-powered Documentation CLI for JavaScript and TypeScript Projects
 
 [![Release](https://github.com/ioncakephper/aidoccli/actions/workflows/release.yml/badge.svg)](https://github.com/ioncakephper/aidoccli/actions/workflows/release.yml)
 [![semantic-release](https://img.shields.io/badge/semantic--release-e10079?logo=semantic-release&logoColor=white)](https://github.com/semantic-release/semantic-release)
@@ -14,15 +14,20 @@
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Quick Start](#quick-start)
-- [Why Choose `js-quality-started-with-release`?](#why-choose-js-quality-started-with-release)
-- [What's Inside?](#whats-inside)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Common Commands](#common-commands)
+  - [Options](#options)
+- [Example](#example)
+- [Why AIDocCLI?](#why-aidoccli)
+- [Roadmap](#roadmap)
 - [Getting Started](#getting-started)
   - [Using as a Template](#using-as-a-template)
   - [Manual Setup](#manual-setup)
   - [Post-Template Setup](#post-template-setup)
 - [Available Scripts](#available-scripts)
-- [How It Works](#how-it-works)
+- [Manage repository files](#manage-repository-files)
   - [Pre-commit and Commit Message Hooks](#pre-commit-and-commit-message-hooks)
   - [Automated Release Generation](#automated-release-generation)
 - [Customization](#customization)
@@ -63,12 +68,12 @@ aidoccli [options] <path-to-your-project>
 
 ### Options
 
-| Option            | Description                                  |
-|-------------------|----------------------------------------------|
-| `-f, --format`    | Output format (markdown, html, etc.)         |
-| `-o, --output`    | Output directory                             |
-| `-c, --config`    | Path to config file                          |
-| `-h, --help`      | Show help information                        |
+| Option         | Description                          |
+| -------------- | ------------------------------------ |
+| `-f, --format` | Output format (markdown, html, etc.) |
+| `-o, --output` | Output directory                     |
+| `-c, --config` | Path to config file                  |
+| `-h, --help`   | Show help information                |
 
 ## Example
 
