@@ -8,7 +8,6 @@ const {
   generateAction,
   handleInitialLogging,
   handleFinalLogging,
-  handleError,
 } = require('./index.js');
 
 describe('CLI Commands', () => {
@@ -82,7 +81,9 @@ describe('CLI Commands', () => {
       describe('handleInitialLogging', () => {
         it('should log initial messages with default options', () => {
           handleInitialLogging([], { exclude: [] });
-          expect(console.log).toHaveBeenCalledWith('--- JSDoc Generator CLI ---');
+          expect(console.log).toHaveBeenCalledWith(
+            '--- JSDoc Generator CLI ---'
+          );
           expect(console.log).toHaveBeenCalledWith(
             'Patterns: Defaulting to all JS/TS files'
           );
