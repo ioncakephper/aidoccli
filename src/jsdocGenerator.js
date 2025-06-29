@@ -696,43 +696,78 @@ function updateJSDocBlock(existingJSDocLines, inferredJSDoc) {
   return updatedLines;
 }
 
-/**
- * Main function to process files and update JSDoc comments.
- * @param {string[]} globPatterns - Array of glob patterns for files to process.
- */
+// --- Helper: Build JSDoc Lines ---
+function buildJSDocLines(inferredJSDoc) {
+  const lines = [];
+  if (inferredJSDoc.name) {
+    lines.push(inferredJSDoc.description);
+    lines.push('@class');
+    if (inferredJSDoc.extendsClass)
+      lines.push(`@augments ${inferredJSDoc.extendsClass}`);
+    if (inferredJSDoc.examples?.length) {
+      lines.push('');
+      inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+    }
+    if (inferredJSDoc.constructorDescription) {
+      lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
+      inferredJSDoc.constructorParams?.forEach((param) =>
+        lines.push(
+          `@param {${param.type}} ${param.name} - ${param.description}`
+        )
+      );
+    }
+    return lines;
+  }
+  // Function/method
+  lines.push(inferredJSDoc.description);
+  if (inferredJSDoc.params?.length) {
+    lines.push('');
+    inferredJSDoc.params.forEach((param) =>
+      lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
+    );
+  }
+  if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
+    lines.push(
+      `@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`
+    );
+  }
+  if (inferredJSDoc.throws?.length) {
+    inferredJSDoc.throws.forEach((thr) =>
+      lines.push(`@throws {Error} ${thr.description}`)
+    );
+  }
+  if (inferredJSDoc.examples?.length) {
+    inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+  }
+  return lines;
+}
+
+// --- Main: Process Files and Update JSDoc ---
 exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
   globPatterns
 ) {
   const files = await glob(globPatterns);
   console.log(`Found ${files.length} JavaScript/TypeScript files to process.`);
-
   if (files.length === 0) {
     console.log('No files matching the provided patterns were found.');
     return;
   }
-
   const program = ts.createProgram(files, {});
   const checker = program.getTypeChecker();
-
   for (const filePath of files) {
     console.log(`\nProcessing file: ${filePath}`);
     let code = await fs.readFile(filePath, 'utf-8');
-
-    // Parse code with Babel to get AST and access leading comments easily
     const babelAst = babelParser.parse(code, {
       sourceType: 'module',
-      plugins: ['jsx', 'typescript'], // Support JSX and TypeScript
+      plugins: ['jsx', 'typescript'],
     });
-
     let fileModified = false;
-
     traverse(babelAst, {
       async enter(path) {
         let node = path.node;
         let jsdocComment = getJSDocBlocks(node.leadingComments);
         let inferredJSDoc = null;
-        let rawCode = generate(node).code; // Get code of the current node
-
+        let rawCode = generate(node).code;
         if (path.isClassDeclaration() || path.isClassExpression()) {
           const classSymbol = checker.getSymbolAtLocation(node.id || node);
           if (classSymbol) {
@@ -750,28 +785,15 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
           path.isArrowFunctionExpression()
         ) {
           let symbol = null;
-          if (node.id) {
-            // FunctionDeclaration, FunctionExpression (named)
-            symbol = checker.getSymbolAtLocation(node.id);
-          } else if (node.key && path.isClassMethod()) {
-            // ClassMethod
+          if (node.id) symbol = checker.getSymbolAtLocation(node.id);
+          else if (node.key && path.isClassMethod())
             symbol = checker.getSymbolAtLocation(node.key);
-          } else {
-            // Anonymous function, ArrowFunctionExpression (assigned to a variable)
-            // Try to get symbol from parent variable declarator if it's an arrow function assigned to a const
-            if (
-              path.parentPath.isVariableDeclarator() &&
-              path.parentPath.node.id
-            ) {
-              symbol = checker.getSymbolAtLocation(path.parentPath.node.id);
-            } else {
-              // For truly anonymous functions/methods without an easily retrievable symbol,
-              // we'll just use a generic name or skip if symbol is strictly needed.
-              // For simplicity, we'll try to use a placeholder or skip if no symbol can be found.
-              symbol = { getName: () => node.type }; // Fallback name
-            }
-          }
-
+          else if (
+            path.parentPath.isVariableDeclarator() &&
+            path.parentPath.node.id
+          )
+            symbol = checker.getSymbolAtLocation(path.parentPath.node.id);
+          else symbol = { getName: () => node.type };
           if (symbol) {
             console.log(`  Generating JSDoc for function: ${symbol.getName()}`);
             inferredJSDoc = await inferFunctionOrConstructorJSDoc(
@@ -781,7 +803,6 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
             );
           }
         }
-
         if (inferredJSDoc) {
           let newJSDocLines = jsdocComment
             ? updateJSDocBlock(jsdocComment, inferredJSDoc)
@@ -792,11 +813,7 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
               `/**${newCommentContent}*/ ''`,
               { plugins: ['jsx', 'typescript'] }
             ).leadingComments[0];
-            // Ensure comments array exists
-            if (!node.leadingComments) {
-              node.leadingComments = [];
-            }
-            // Replace existing JSDoc or add new one
+            if (!node.leadingComments) node.leadingComments = [];
             const existingJsdocIndex = node.leadingComments.findIndex(
               (c) => c.type === 'CommentBlock' && c.value.startsWith('*')
             );
@@ -810,7 +827,6 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
         }
       },
     });
-
     if (fileModified) {
       const output = generate(babelAst, {
         retainLines: true,
@@ -824,66 +840,3 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
   }
   console.log('JSDoc processing complete.');
 };
-
-/**
- * Builds an array of JSDoc comment lines based on the provided inferred JSDoc metadata.
- *
- * @param {Object} inferredJSDoc - The inferred JSDoc metadata for a class or function.
- * @param {string} [inferredJSDoc.name] - The name of the class (if applicable).
- * @param {string} inferredJSDoc.description - The description of the class or function.
- * @param {string} [inferredJSDoc.extendsClass] - The name of the parent class, if the class extends another.
- * @param {Array<{type: string, name: string, description: string}>} [inferredJSDoc.constructorParams] - Parameters for the class constructor.
- * @param {string} [inferredJSDoc.constructorDescription] - Description of the class constructor.
- * @param {Array<{type: string, name: string, description: string}>} [inferredJSDoc.params] - Parameters for the function or method.
- * @param {{type: string, description: string}} [inferredJSDoc.returns] - Return type and description for the function or method.
- * @param {Array<{description: string}>} [inferredJSDoc.throws] - List of exceptions that the function or method may throw.
- * @param {Array<string>} [inferredJSDoc.examples] - Example usages of the class or function.
- * @returns {string[]} An array of strings, each representing a line in the JSDoc comment.
- */
-function buildJSDocLines(inferredJSDoc) {
-  const lines = [];
-  if (inferredJSDoc.name) {
-    // Class
-    lines.push(inferredJSDoc.description);
-    lines.push('@class');
-    if (inferredJSDoc.extendsClass)
-      lines.push(`@augments ${inferredJSDoc.extendsClass}`);
-    if (inferredJSDoc.examples?.length) {
-      lines.push('');
-      inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
-    }
-    if (inferredJSDoc.constructorDescription) {
-      lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
-      inferredJSDoc.constructorParams?.forEach((param) =>
-        lines.push(
-          `@param {${param.type}} ${param.name} - ${param.description}`
-        )
-      );
-    }
-  } else {
-    // Function/method
-    lines.push(inferredJSDoc.description);
-    if (inferredJSDoc.params?.length) {
-      lines.push('');
-      inferredJSDoc.params.forEach((param) =>
-        lines.push(
-          `@param {${param.type}} ${param.name} - ${param.description}`
-        )
-      );
-    }
-    if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
-      lines.push(
-        `@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`
-      );
-    }
-    if (inferredJSDoc.throws?.length) {
-      inferredJSDoc.throws.forEach((thr) =>
-        lines.push(`@throws {Error} ${thr.description}`)
-      );
-    }
-    if (inferredJSDoc.examples?.length) {
-      inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
-    }
-  }
-  return lines;
-}
