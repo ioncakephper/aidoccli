@@ -8,6 +8,9 @@ const {
   generateAction,
   handleInitialLogging,
   handleFinalLogging,
+  handleError,
+  runCli,
+  program,
 } = require('./index.js');
 
 describe('CLI Commands', () => {
@@ -103,6 +106,29 @@ describe('CLI Commands', () => {
           );
           expect(options.verbose).toBe(false);
         });
+
+        it('should log excluded patterns when provided', () => {
+          const options = { exclude: ['node_modules/**', '*.test.js'] };
+          handleInitialLogging([], options);
+          expect(console.log).toHaveBeenCalledWith(
+            `Excluded Patterns: ${options.exclude.join(', ')}`
+          );
+        });
+
+        it('should log dry-run information when enabled', () => {
+          const options = { dryRun: true, exclude: [] };
+          handleInitialLogging([], options);
+          expect(console.log).toHaveBeenCalledWith('\n--- DRY RUN ENABLED ---');
+          expect(console.log).toHaveBeenCalledWith(
+            'No files will be modified.'
+          );
+        });
+
+        it('should not log anything when --quiet is true (and not verbose)', () => {
+          const options = { quiet: true, exclude: [] };
+          handleInitialLogging([], options);
+          expect(console.log).not.toHaveBeenCalled();
+        });
       });
 
       describe('handleFinalLogging', () => {
@@ -115,7 +141,75 @@ describe('CLI Commands', () => {
             'Remember: This was a DRY RUN. No file modifications were made.'
           );
         });
+
+        it('should log only the completion message when not a dry run', () => {
+          handleFinalLogging({ dryRun: false });
+          expect(console.log).toHaveBeenCalledWith(
+            '\n--- JSDoc Generation Process Complete ---'
+          );
+          expect(console.log).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not log anything when --quiet is true', () => {
+          handleFinalLogging({ quiet: true, dryRun: true });
+          expect(console.log).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('handleError', () => {
+        let originalExitCode;
+        beforeEach(() => {
+          originalExitCode = process.exitCode;
+        });
+        afterEach(() => {
+          process.exitCode = originalExitCode;
+        });
+        it('should log the error message and set the process exit code', () => {
+          const testError = new Error('A specific test error');
+          handleError(testError);
+          expect(console.error).toHaveBeenCalledWith(
+            '\n--- An error occurred during JSDoc generation ---'
+          );
+          expect(console.error).toHaveBeenCalledWith(testError);
+          expect(process.exitCode).toBe(1);
+        });
       });
     });
+  });
+});
+
+describe('runCli entry point', () => {
+  const originalArgv = process.argv;
+  let parseSpy;
+  let outputHelpSpy;
+
+  beforeEach(() => {
+    // Spy on commander methods before each test
+    parseSpy = jest.spyOn(program, 'parse').mockImplementation(() => {});
+    outputHelpSpy = jest
+      .spyOn(program, 'outputHelp')
+      .mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Restore original argv and spies after each test
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it('should call program.parse and not output help when arguments are provided', () => {
+    process.argv = ['node', 'cli.js', 'generate'];
+    runCli();
+    expect(parseSpy).toHaveBeenCalledWith(process.argv);
+    expect(outputHelpSpy).not.toHaveBeenCalled();
+  });
+
+  it('should call program.outputHelp when no command-line arguments are provided', () => {
+    // Simulate running with no arguments beyond the script name
+    process.argv = ['node', 'cli.js'];
+    runCli();
+    // It should still parse, but the key check is for outputHelp
+    expect(parseSpy).toHaveBeenCalledWith(process.argv);
+    expect(outputHelpSpy).toHaveBeenCalled();
   });
 });

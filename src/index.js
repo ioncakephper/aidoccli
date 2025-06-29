@@ -176,3 +176,4 @@ if (process.env.NODE_ENV === 'test') {
   exports.handleError = handleError;
   exports.generateAction = generateAction;
 }
+exports.program = program;
