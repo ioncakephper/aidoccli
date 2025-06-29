@@ -351,18 +351,15 @@ async function inferFunctionOrConstructorJSDoc(checker, symbol, rawCode) {
           if (match && match[1]) {
             returnTypeString = `Promise<${match[1]}>`; // Keep Promise<T> if T is something other than void
           }
+        } else if (returnTypeString === 'Promise<void>' || returnTypeString === 'Promise<any>') {
+          // For async functions that implicitly return void or any, just indicate Promise<void>
+          returnTypeString = 'Promise<void>';
+        } else if (returnTypeString === 'void' && isAsync) {
+          returnTypeString = 'Promise<void>'; // Explicitly typed void for async should still return Promise<void>
         }
-      } else if (
-        returnTypeString === 'Promise<void>' ||
-        returnTypeString === 'Promise<any>'
-      ) {
-        // For async functions that implicitly return void or any, just indicate Promise<void>
-        returnTypeString = 'Promise<void>';
-      } else if (returnTypeString === 'void' && isAsync) {
-        returnTypeString = 'Promise<void>'; // Explicitly typed void for async should still return Promise<void>
-      }
 
-      returns.type = returnTypeString || 'void';
+        returns.type = returnTypeString || 'void';
+      }
     }
   }
 
@@ -701,12 +698,9 @@ function updateJSDocBlock(existingJSDocLines, inferredJSDoc) {
  * Main function to process files and update JSDoc comments.
  * @param {string[]} globPatterns - Array of glob patterns for files to process.
  */
-exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
-  globPatterns
-) {
+exports.processFilesWithJSDoc = async function processFilesWithJSDoc(globPatterns) {
   const files = await glob(globPatterns);
   console.log(`Found ${files.length} JavaScript/TypeScript files to process.`);
-
   if (files.length === 0) {
     console.log('No files matching the provided patterns were found.');
     return;
@@ -718,165 +712,116 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
   for (const filePath of files) {
     console.log(`\nProcessing file: ${filePath}`);
     let code = await fs.readFile(filePath, 'utf-8');
-
-    // Parse code with Babel to get AST and access leading comments easily
     const babelAst = babelParser.parse(code, {
       sourceType: 'module',
-      plugins: ['jsx', 'typescript'], // Support JSX and TypeScript
+      plugins: ['jsx', 'typescript'],
     });
 
     let fileModified = false;
 
-    traverse(babelAst, {
-      async enter(path) {
-        let node = path.node;
-        let jsdocComment = getJSDocBlocks(node.leadingComments);
-        let inferredJSDoc = null;
-        let rawCode = generate(node).code; // Get code of the current node
+    // Helper: Generate new JSDoc lines for a node
+    async function generateJSDocLines(node, path) {
+      let jsdocComment = getJSDocBlocks(node.leadingComments);
+      let inferredJSDoc = null;
+      let rawCode = generate(node).code;
 
-        if (path.isClassDeclaration() || path.isClassExpression()) {
-          const classSymbol = checker.getSymbolAtLocation(node.id || node);
-          if (classSymbol) {
-            console.log(`  Updating JSDoc for class: ${classSymbol.getName()}`);
-            inferredJSDoc = await inferClassJSDoc(
-              checker,
-              classSymbol,
-              rawCode
-            );
-          }
-        } else if (
-          path.isClassMethod() ||
-          path.isFunctionDeclaration() ||
-          path.isFunctionExpression() ||
-          path.isArrowFunctionExpression()
-        ) {
-          let symbol = null;
-          if (node.id) {
-            // FunctionDeclaration, FunctionExpression (named)
-            symbol = checker.getSymbolAtLocation(node.id);
-          } else if (node.key && path.isClassMethod()) {
-            // ClassMethod
-            symbol = checker.getSymbolAtLocation(node.key);
-          } else {
-            // Anonymous function, ArrowFunctionExpression (assigned to a variable)
-            // Try to get symbol from parent variable declarator if it's an arrow function assigned to a const
-            if (
-              path.parentPath.isVariableDeclarator() &&
-              path.parentPath.node.id
-            ) {
-              symbol = checker.getSymbolAtLocation(path.parentPath.node.id);
-            } else {
-              // For truly anonymous functions/methods without an easily retrievable symbol,
-              // we'll just use a generic name or skip if symbol is strictly needed.
-              // For simplicity, we'll try to use a placeholder or skip if no symbol can be found.
-              symbol = { getName: () => node.type }; // Fallback name
-            }
-          }
+      if (path.isClassDeclaration() || path.isClassExpression()) {
+        const classSymbol = checker.getSymbolAtLocation(node.id || node);
+        if (!classSymbol) return null;
+        console.log(`  Updating JSDoc for class: ${classSymbol.getName()}`);
+        inferredJSDoc = await inferClassJSDoc(checker, classSymbol, rawCode);
+      } else if (
+        path.isClassMethod() ||
+        path.isFunctionDeclaration() ||
+        path.isFunctionExpression() ||
+        path.isArrowFunctionExpression()
+      ) {
+        let symbol = null;
+        if (node.id) symbol = checker.getSymbolAtLocation(node.id);
+        else if (node.key && path.isClassMethod()) symbol = checker.getSymbolAtLocation(node.key);
+        else if (path.parentPath.isVariableDeclarator() && path.parentPath.node.id)
+          symbol = checker.getSymbolAtLocation(path.parentPath.node.id);
+        else symbol = { getName: () => node.type };
+        if (!symbol) return null;
+        console.log(`  Generating JSDoc for function: ${symbol.getName()}`);
+        inferredJSDoc = await inferFunctionOrConstructorJSDoc(checker, symbol, rawCode);
+      }
 
-          if (symbol) {
-            console.log(`  Generating JSDoc for function: ${symbol.getName()}`);
-            inferredJSDoc = await inferFunctionOrConstructorJSDoc(
-              checker,
-              symbol,
-              rawCode
-            );
-          }
+      if (!inferredJSDoc) return null;
+
+      if (jsdocComment) {
+        return updateJSDocBlock(jsdocComment, inferredJSDoc);
+      }
+      // Create new JSDoc block
+      return createNewJSDocLines(inferredJSDoc);
+    }
+
+    // Helper: Create new JSDoc block lines
+    function createNewJSDocLines(inferredJSDoc) {
+      const lines = [];
+      if (inferredJSDoc.name) {
+        lines.push(inferredJSDoc.description);
+        lines.push(`@class`);
+        if (inferredJSDoc.extendsClass) lines.push(`@augments ${inferredJSDoc.extendsClass}`);
+        if (inferredJSDoc.examples?.length) {
+          lines.push('');
+          inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
         }
-
-        if (inferredJSDoc) {
-          let newJSDocLines = [];
-          if (jsdocComment) {
-            newJSDocLines = updateJSDocBlock(jsdocComment, inferredJSDoc);
-          } else {
-            // Create new JSDoc block
-            if (inferredJSDoc.name) {
-              // It's a class
-              newJSDocLines.push(inferredJSDoc.description);
-              newJSDocLines.push(`@class`);
-              if (inferredJSDoc.extendsClass)
-                newJSDocLines.push(`@augments ${inferredJSDoc.extendsClass}`);
-              if (inferredJSDoc.examples && inferredJSDoc.examples.length > 0) {
-                newJSDocLines.push('');
-                inferredJSDoc.examples.forEach((ex) =>
-                  newJSDocLines.push(`@example ${ex}`)
-                );
-              }
-              // Handle constructor if it was the target of inferredJSDoc (class method 'constructor')
-              if (inferredJSDoc.constructorDescription) {
-                newJSDocLines.push(
-                  `@constructor ${inferredJSDoc.constructorDescription}`
-                );
-                inferredJSDoc.constructorParams?.forEach((param) =>
-                  newJSDocLines.push(
-                    `@param {${param.type}} ${param.name} - ${param.description}`
-                  )
-                );
-              }
-            } else {
-              // It's a function/method
-              newJSDocLines.push(inferredJSDoc.description);
-              if (inferredJSDoc.params && inferredJSDoc.params.length > 0) {
-                newJSDocLines.push(''); // Add a blank line before params
-                inferredJSDoc.params.forEach((param) =>
-                  newJSDocLines.push(
-                    `@param {${param.type}} ${param.name} - ${param.description}`
-                  )
-                );
-              }
-              if (
-                inferredJSDoc.returns &&
-                inferredJSDoc.returns.type &&
-                inferredJSDoc.returns.type !== 'void'
-              ) {
-                newJSDocLines.push(
-                  `@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`
-                );
-              }
-              if (inferredJSDoc.throws && inferredJSDoc.throws.length > 0) {
-                inferredJSDoc.throws.forEach((thr) =>
-                  newJSDocLines.push(`@throws {Error} ${thr.description}`)
-                );
-              }
-              if (inferredJSDoc.examples && inferredJSDoc.examples.length > 0) {
-                inferredJSDoc.examples.forEach((ex) =>
-                  newJSDocLines.push(`@example ${ex}`)
-                );
-              }
-            }
-          }
-
-          if (newJSDocLines.length > 0) {
-            const newCommentContent = `*\n * ${newJSDocLines.join('\n * ')}\n `;
-            const newComment = babelParser.parseExpression(
-              `/**${newCommentContent}*/ ''`,
-              { plugins: ['jsx', 'typescript'] }
-            ).leadingComments[0];
-
-            // Ensure comments array exists
-            if (!node.leadingComments) {
-              node.leadingComments = [];
-            }
-            // Replace existing JSDoc or add new one
-            const existingJsdocIndex = node.leadingComments.findIndex(
-              (c) => c.type === 'CommentBlock' && c.value.startsWith('*')
-            );
-            if (existingJsdocIndex !== -1) {
-              node.leadingComments[existingJsdocIndex] = newComment;
-            } else {
-              // If no existing JSDoc, add it as the first leading comment
-              node.leadingComments.unshift(newComment);
-            }
-            fileModified = true;
-          }
+        if (inferredJSDoc.constructorDescription) {
+          lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
+          inferredJSDoc.constructorParams?.forEach((param) =>
+            lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
+          );
         }
+      } else {
+        lines.push(inferredJSDoc.description);
+        if (inferredJSDoc.params?.length) {
+          lines.push('');
+          inferredJSDoc.params.forEach((param) =>
+            lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
+          );
+        }
+        if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
+          lines.push(`@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`);
+        }
+        if (inferredJSDoc.throws?.length) {
+          inferredJSDoc.throws.forEach((thr) => lines.push(`@throws {Error} ${thr.description}`));
+        }
+        if (inferredJSDoc.examples?.length) {
+          inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+        }
+      }
+      return lines;
+    }
+
+    // Traverse AST and update JSDoc
+    await traverse(babelAst, {
+      enter: async function (path) {
+        const node = path.node;
+        const newJSDocLines = await generateJSDocLines(node, path);
+        if (!newJSDocLines || !newJSDocLines.length) return;
+
+        const newCommentContent = `*\n * ${newJSDocLines.join('\n * ')}\n `;
+        const newComment = babelParser.parseExpression(
+          `/**${newCommentContent}*/ ''`,
+          { plugins: ['jsx', 'typescript'] }
+        ).leadingComments[0];
+
+        if (!node.leadingComments) node.leadingComments = [];
+        const existingJsdocIndex = node.leadingComments.findIndex(
+          (c) => c.type === 'CommentBlock' && c.value.startsWith('*')
+        );
+        if (existingJsdocIndex !== -1) {
+          node.leadingComments[existingJsdocIndex] = newComment;
+        } else {
+          node.leadingComments.unshift(newComment);
+        }
+        fileModified = true;
       },
     });
 
     if (fileModified) {
-      const output = generate(babelAst, {
-        retainLines: true,
-        comments: true,
-      }).code;
+      const output = generate(babelAst, { retainLines: true, comments: true }).code;
       await fs.writeFile(filePath, output, 'utf-8');
       console.log(`  Successfully updated ${filePath}`);
     } else {
