@@ -146,10 +146,12 @@ program
 async function generateAction(patterns, options) {
   handleInitialLogging(patterns, options);
 
-  const effectivePatterns =
-    patterns.length > 0
-      ? patterns
-      : ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'];
+  let effectivePatterns = patterns;
+  if (patterns.length === 0) {
+    effectivePatterns = ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'];
+    // Add a safe default exclusion for node_modules
+    options.exclude.push('node_modules/**');
+  }
 
   try {
     await processFilesWithJSDoc(effectivePatterns, options);
