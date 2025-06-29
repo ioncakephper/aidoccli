@@ -351,17 +351,16 @@ async function inferFunctionOrConstructorJSDoc(checker, symbol, rawCode) {
           if (match && match[1]) {
             returnTypeString = `Promise<${match[1]}>`; // Keep Promise<T> if T is something other than void
           }
+        } else if (
+          returnTypeString === 'Promise<void>' ||
+          returnTypeString === 'Promise<any>'
+        ) {
+          // For async functions that implicitly return void or any, just indicate Promise<void>
+          returnTypeString = 'Promise<void>';
+        } else if (returnTypeString === 'void' && isAsync) {
+          returnTypeString = 'Promise<void>'; // Explicitly typed void for async should still return Promise<void>
         }
-      } else if (
-        returnTypeString === 'Promise<void>' ||
-        returnTypeString === 'Promise<any>'
-      ) {
-        // For async functions that implicitly return void or any, just indicate Promise<void>
-        returnTypeString = 'Promise<void>';
-      } else if (returnTypeString === 'void' && isAsync) {
-        returnTypeString = 'Promise<void>'; // Explicitly typed void for async should still return Promise<void>
       }
-
       returns.type = returnTypeString || 'void';
     }
   }
@@ -784,74 +783,15 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
         }
 
         if (inferredJSDoc) {
-          let newJSDocLines = [];
-          if (jsdocComment) {
-            newJSDocLines = updateJSDocBlock(jsdocComment, inferredJSDoc);
-          } else {
-            // Create new JSDoc block
-            if (inferredJSDoc.name) {
-              // It's a class
-              newJSDocLines.push(inferredJSDoc.description);
-              newJSDocLines.push(`@class`);
-              if (inferredJSDoc.extendsClass)
-                newJSDocLines.push(`@augments ${inferredJSDoc.extendsClass}`);
-              if (inferredJSDoc.examples && inferredJSDoc.examples.length > 0) {
-                newJSDocLines.push('');
-                inferredJSDoc.examples.forEach((ex) =>
-                  newJSDocLines.push(`@example ${ex}`)
-                );
-              }
-              // Handle constructor if it was the target of inferredJSDoc (class method 'constructor')
-              if (inferredJSDoc.constructorDescription) {
-                newJSDocLines.push(
-                  `@constructor ${inferredJSDoc.constructorDescription}`
-                );
-                inferredJSDoc.constructorParams?.forEach((param) =>
-                  newJSDocLines.push(
-                    `@param {${param.type}} ${param.name} - ${param.description}`
-                  )
-                );
-              }
-            } else {
-              // It's a function/method
-              newJSDocLines.push(inferredJSDoc.description);
-              if (inferredJSDoc.params && inferredJSDoc.params.length > 0) {
-                newJSDocLines.push(''); // Add a blank line before params
-                inferredJSDoc.params.forEach((param) =>
-                  newJSDocLines.push(
-                    `@param {${param.type}} ${param.name} - ${param.description}`
-                  )
-                );
-              }
-              if (
-                inferredJSDoc.returns &&
-                inferredJSDoc.returns.type &&
-                inferredJSDoc.returns.type !== 'void'
-              ) {
-                newJSDocLines.push(
-                  `@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`
-                );
-              }
-              if (inferredJSDoc.throws && inferredJSDoc.throws.length > 0) {
-                inferredJSDoc.throws.forEach((thr) =>
-                  newJSDocLines.push(`@throws {Error} ${thr.description}`)
-                );
-              }
-              if (inferredJSDoc.examples && inferredJSDoc.examples.length > 0) {
-                inferredJSDoc.examples.forEach((ex) =>
-                  newJSDocLines.push(`@example ${ex}`)
-                );
-              }
-            }
-          }
-
+          let newJSDocLines = jsdocComment
+            ? updateJSDocBlock(jsdocComment, inferredJSDoc)
+            : buildJSDocLines(inferredJSDoc);
           if (newJSDocLines.length > 0) {
-            const newCommentContent = `*\n * ${newJSDocLines.join('\n * ')}\n `;
+            const newCommentContent = `*\n * ${newJSDocLines.join('\n * ')}\n`;
             const newComment = babelParser.parseExpression(
               `/**${newCommentContent}*/ ''`,
               { plugins: ['jsx', 'typescript'] }
             ).leadingComments[0];
-
             // Ensure comments array exists
             if (!node.leadingComments) {
               node.leadingComments = [];
@@ -863,7 +803,6 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
             if (existingJsdocIndex !== -1) {
               node.leadingComments[existingJsdocIndex] = newComment;
             } else {
-              // If no existing JSDoc, add it as the first leading comment
               node.leadingComments.unshift(newComment);
             }
             fileModified = true;
@@ -885,3 +824,66 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(
   }
   console.log('JSDoc processing complete.');
 };
+
+/**
+ * Builds an array of JSDoc comment lines based on the provided inferred JSDoc metadata.
+ *
+ * @param {Object} inferredJSDoc - The inferred JSDoc metadata for a class or function.
+ * @param {string} [inferredJSDoc.name] - The name of the class (if applicable).
+ * @param {string} inferredJSDoc.description - The description of the class or function.
+ * @param {string} [inferredJSDoc.extendsClass] - The name of the parent class, if the class extends another.
+ * @param {Array<{type: string, name: string, description: string}>} [inferredJSDoc.constructorParams] - Parameters for the class constructor.
+ * @param {string} [inferredJSDoc.constructorDescription] - Description of the class constructor.
+ * @param {Array<{type: string, name: string, description: string}>} [inferredJSDoc.params] - Parameters for the function or method.
+ * @param {{type: string, description: string}} [inferredJSDoc.returns] - Return type and description for the function or method.
+ * @param {Array<{description: string}>} [inferredJSDoc.throws] - List of exceptions that the function or method may throw.
+ * @param {Array<string>} [inferredJSDoc.examples] - Example usages of the class or function.
+ * @returns {string[]} An array of strings, each representing a line in the JSDoc comment.
+ */
+function buildJSDocLines(inferredJSDoc) {
+  const lines = [];
+  if (inferredJSDoc.name) {
+    // Class
+    lines.push(inferredJSDoc.description);
+    lines.push('@class');
+    if (inferredJSDoc.extendsClass)
+      lines.push(`@augments ${inferredJSDoc.extendsClass}`);
+    if (inferredJSDoc.examples?.length) {
+      lines.push('');
+      inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+    }
+    if (inferredJSDoc.constructorDescription) {
+      lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
+      inferredJSDoc.constructorParams?.forEach((param) =>
+        lines.push(
+          `@param {${param.type}} ${param.name} - ${param.description}`
+        )
+      );
+    }
+  } else {
+    // Function/method
+    lines.push(inferredJSDoc.description);
+    if (inferredJSDoc.params?.length) {
+      lines.push('');
+      inferredJSDoc.params.forEach((param) =>
+        lines.push(
+          `@param {${param.type}} ${param.name} - ${param.description}`
+        )
+      );
+    }
+    if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
+      lines.push(
+        `@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`
+      );
+    }
+    if (inferredJSDoc.throws?.length) {
+      inferredJSDoc.throws.forEach((thr) =>
+        lines.push(`@throws {Error} ${thr.description}`)
+      );
+    }
+    if (inferredJSDoc.examples?.length) {
+      inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+    }
+  }
+  return lines;
+}
