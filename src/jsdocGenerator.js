@@ -756,54 +756,47 @@ exports.processFilesWithJSDoc = async function processFilesWithJSDoc(globPattern
       if (!inferredJSDoc) return null;
 
       if (jsdocComment) {
-    // Helper: Create new JSDoc block lines
-    /**
-     * Generates a new JSDoc block as an array of lines, given inferred JSDoc information.
-     * Used when no existing JSDoc block is present for a node; otherwise, updateJSDocBlock is used.
-     * @param {object} inferredJSDoc - The inferred JSDoc properties for the node.
-     * @returns {string[]} The new JSDoc lines.
-     */
-    function createNewJSDocLines(inferredJSDoc) {
-      // Create new JSDoc block
-      return createNewJSDocLines(inferredJSDoc);
-    }
-
-    // Helper: Create new JSDoc block lines
-    function createNewJSDocLines(inferredJSDoc) {
-      const lines = [];
-      if (inferredJSDoc.name) {
-        lines.push(inferredJSDoc.description);
-        lines.push(`@class`);
-        if (inferredJSDoc.extendsClass) lines.push(`@augments ${inferredJSDoc.extendsClass}`);
-        if (inferredJSDoc.examples?.length) {
-          lines.push('');
-          inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
-        }
-        if (inferredJSDoc.constructorDescription) {
-          lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
-          inferredJSDoc.constructorParams?.forEach((param) =>
-            lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
-          );
-        }
+        return updateJSDocBlock(jsdocComment, inferredJSDoc);
       } else {
-        lines.push(inferredJSDoc.description);
-        if (inferredJSDoc.params?.length) {
-          lines.push('');
-          inferredJSDoc.params.forEach((param) =>
-            lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
-          );
+        // Helper: Create new JSDoc block lines
+        function createNewJSDocLines(inferredJSDoc) {
+          const lines = [];
+          if (inferredJSDoc.name) {
+            lines.push(inferredJSDoc.description);
+            lines.push(`@class`);
+            if (inferredJSDoc.extendsClass) lines.push(`@augments ${inferredJSDoc.extendsClass}`);
+            if (inferredJSDoc.examples?.length) {
+              lines.push('');
+              inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+            }
+            if (inferredJSDoc.constructorDescription) {
+              lines.push(`@constructor ${inferredJSDoc.constructorDescription}`);
+              inferredJSDoc.constructorParams?.forEach((param) =>
+                lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
+              );
+            }
+          } else {
+            lines.push(inferredJSDoc.description);
+            if (inferredJSDoc.params?.length) {
+              lines.push('');
+              inferredJSDoc.params.forEach((param) =>
+                lines.push(`@param {${param.type}} ${param.name} - ${param.description}`)
+              );
+            }
+            if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
+              lines.push(`@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`);
+            }
+            if (inferredJSDoc.throws?.length) {
+              inferredJSDoc.throws.forEach((thr) => lines.push(`@throws {Error} ${thr.description}`));
+            }
+            if (inferredJSDoc.examples?.length) {
+              inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
+            }
+          }
+          return lines;
         }
-        if (inferredJSDoc.returns?.type && inferredJSDoc.returns.type !== 'void') {
-          lines.push(`@returns {${inferredJSDoc.returns.type}} ${inferredJSDoc.returns.description}`);
-        }
-        if (inferredJSDoc.throws?.length) {
-          inferredJSDoc.throws.forEach((thr) => lines.push(`@throws {Error} ${thr.description}`));
-        }
-        if (inferredJSDoc.examples?.length) {
-          inferredJSDoc.examples.forEach((ex) => lines.push(`@example ${ex}`));
-        }
+        return createNewJSDocLines(inferredJSDoc);
       }
-      return lines;
     }
 
     // Traverse AST and update JSDoc
