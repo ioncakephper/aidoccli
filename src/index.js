@@ -168,3 +168,11 @@ exports.runCli = function runCli() {
     program.outputHelp();
   }
 };
+
+// Export for testing purposes
+if (process.env.NODE_ENV === 'test') {
+  exports.handleInitialLogging = handleInitialLogging;
+  exports.handleFinalLogging = handleFinalLogging;
+  exports.handleError = handleError;
+  exports.generateAction = generateAction;
+}
