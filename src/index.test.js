@@ -157,6 +157,13 @@ describe('CLI Commands', () => {
       });
 
       describe('handleError', () => {
+        let originalExitCode;
+        beforeEach(() => {
+          originalExitCode = process.exitCode;
+        });
+        afterEach(() => {
+          process.exitCode = originalExitCode;
+        });
         it('should log the error message and set the process exit code', () => {
           const testError = new Error('A specific test error');
           handleError(testError);

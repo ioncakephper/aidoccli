@@ -175,5 +175,5 @@ if (process.env.NODE_ENV === 'test') {
   exports.handleFinalLogging = handleFinalLogging;
   exports.handleError = handleError;
   exports.generateAction = generateAction;
-  exports.program = program;
 }
+exports.program = program;
