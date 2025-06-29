@@ -3,7 +3,7 @@
 const ts = require('typescript');
 const fs = require('fs-extra');
 const { glob } = require('glob');
-const OpenAI = require('openai');
+// Remove direct OpenAI import; use shared API module instead
 const babelParser = require('@babel/parser');
 const generate = require('@babel/generator').default;
 const traverse = require('@babel/traverse').default;
@@ -13,9 +13,8 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // --- OpenAI Configuration ---
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Import the shared OpenAI API call function
+const { callOpenAI } = require('./ai/openai');
 
 // --- JSDoc Tag Definitions ---
 // Tags that the generator will try to manage, generate, or overwrite.
@@ -429,37 +428,7 @@ function getParamDescription(paramName, inferredTypeString) {
   return `The ${inferredTypeString} value of ${paramName}.`;
 }
 
-/**
- * Calls the OpenAI API with a given prompt.
- * @param {string} prompt - The prompt for the OpenAI API.
- * @param {string} model - The OpenAI model to use (e.g., 'gpt-3.5-turbo', 'gpt-4o').
- * @returns {Promise<string>} The response content from the OpenAI API.
- */
-async function callOpenAI(prompt, model = 'gpt-3.5-turbo') {
-  if (!openai.apiKey) {
-    throw new Error(
-      'OPENAI_API_KEY is not set in your environment variables. Please set it to use AI features.'
-    );
-  }
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' }, // Request JSON output
-      temperature: 0.7, // Adjust creativity
-      max_tokens: 500, // Limit response length
-    });
-    return completion.choices[0].message.content;
-  } catch (error) {
-    console.error('Error calling OpenAI API:', error.message);
-    if (error.response?.status) {
-      console.error('OpenAI API Status:', error.response.status);
-      console.error('OpenAI API Data:', error.response.data);
-    }
-    throw new Error('Failed to get response from OpenAI API.');
-  }
-}
+// Removed duplicate callOpenAI implementation; now using shared module from ./ai/openai
 
 /**
  * Updates an existing JSDoc block with new or inferred information.
