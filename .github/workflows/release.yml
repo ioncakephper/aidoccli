@@ -1,0 +1,35 @@
+name: Semantic Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history for semantic-release to analyze
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.8.1'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run semantic-release
+        run: npx semantic-release 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          # If publishing to npm, you would also need:
+          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
